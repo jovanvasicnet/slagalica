@@ -707,7 +707,10 @@ public class MainController {
     @GetMapping("/team/game1/{matchId}")
     public GameRound getGame(@PathVariable int matchId){
 
-        return GameService.activeGames.get(matchId);
+        return GameService.activeGames.computeIfAbsent(
+                matchId,
+                id -> GameService.generateGame(id)
+        );
 
     }
     @PostMapping("/team/game1/answer")
