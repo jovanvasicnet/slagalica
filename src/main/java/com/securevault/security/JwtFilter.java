@@ -17,22 +17,31 @@ public class JwtFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
 
-        // VAŽNO za CORS
-        if(req.getMethod().equalsIgnoreCase("OPTIONS")) {
-            chain.doFilter(request, response);
-            return;
-        }
-
         String path = req.getRequestURI();
 
-        if(path.equals("/admin/login") || path.equals("/") || path.equals("/ping")) {
-            chain.doFilter(request, response);
+        // CORS preflight
+        if(req.getMethod().equalsIgnoreCase("OPTIONS")){
+            chain.doFilter(request,response);
             return;
         }
 
+        // PUBLIC ROUTES
+        if(
+                path.startsWith("/tournament") ||
+                        path.startsWith("/team") ||
+                        path.startsWith("/suggestions") ||
+                        path.equals("/admin/login") ||
+                        path.equals("/") ||
+                        path.equals("/ping")
+        ){
+            chain.doFilter(request,response);
+            return;
+        }
+
+        // ADMIN JWT
         String authHeader = req.getHeader("Authorization");
 
-        if(authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if(authHeader == null || !authHeader.startsWith("Bearer ")){
 
             res.setStatus(401);
             return;
@@ -40,12 +49,12 @@ public class JwtFilter implements Filter {
 
         String token = authHeader.substring(7);
 
-        if(!JwtUtil.validateToken(token)) {
+        if(!JwtUtil.validateToken(token)){
 
             res.setStatus(401);
             return;
         }
 
-        chain.doFilter(request, response);
+        chain.doFilter(request,response);
     }
 }
