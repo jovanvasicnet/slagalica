@@ -12,19 +12,19 @@ public class GameService {
 
     public static GameRound generateGame(int matchId){
 
-        int len = 10 + rand.nextInt(3); // 10-12
+        // RANDOM DUŽINA 10-12
+        int len = 10 + rand.nextInt(3);
 
-        List<String> candidates = new ArrayList<>();
+        List<String> candidates = WordService.wordsByLength.get(len);
 
-        for(String w : WordService.words){
-
-            if(w.length() == len){
-                candidates.add(w);
-            }
-
+        if(candidates == null || candidates.isEmpty()){
+            throw new RuntimeException("Nema riječi dužine "+len);
         }
 
-        String solution = candidates.get(rand.nextInt(candidates.size()));
+        // RANDOM RIJEČ TE DUŽINE
+        String solution = candidates.get(
+                rand.nextInt(candidates.size())
+        );
 
         List<Character> letters = new ArrayList<>();
 
@@ -32,6 +32,7 @@ public class GameService {
             letters.add(c);
         }
 
+        // DODAJ RANDOM SLOVA DO 12
         while(letters.size() < 12){
 
             char randomLetter = (char)('A' + rand.nextInt(26));
@@ -39,6 +40,7 @@ public class GameService {
 
         }
 
+        // IZMIJEŠAJ
         Collections.shuffle(letters);
 
         GameRound g = new GameRound();
@@ -51,6 +53,74 @@ public class GameService {
         activeGames.put(matchId,g);
 
         return g;
+    }
+
+    public static boolean canBuild(String word, List<Character> letters){
+
+        List<Character> temp = new ArrayList<>(letters);
+
+        for(char c : word.toCharArray()){
+
+            if(!temp.remove((Character)c)){
+                return false;
+            }
+
+        }
+
+        return true;
+    }
+
+    public static int score(GameRound g, String word){
+
+        if(word == null) return 0;
+
+        if(!WordService.exists(word)) return 0;
+
+        if(!canBuild(word,g.letters)) return 0;
+
+        int points = word.length();
+
+        if(word.equals(g.solution)){
+            points += 3;
+        }
+
+        if(word.length() > g.solution.length()){
+            points += 6;
+        }
+
+        return points;
+    }
+
+    public static Map<String,Object> calculateResult(GameRound g){
+
+        Map<String,Object> res = new HashMap<>();
+
+        Iterator<Integer> it = g.answers.keySet().iterator();
+
+        if(!it.hasNext()) return res;
+
+        int team1 = it.next();
+        String w1 = g.answers.get(team1);
+
+        int team2 = it.hasNext() ? it.next() : -1;
+        String w2 = team2 != -1 ? g.answers.get(team2) : "";
+
+        int p1 = score(g,w1);
+        int p2 = score(g,w2);
+
+        if(p1 > p2){
+            p1 += 6;
+        }else if(p2 > p1){
+            p2 += 6;
+        }
+
+        res.put("team1Word",w1);
+        res.put("team2Word",w2);
+        res.put("team1Points",p1);
+        res.put("team2Points",p2);
+        res.put("solution",g.solution);
+
+        return res;
     }
 
 }

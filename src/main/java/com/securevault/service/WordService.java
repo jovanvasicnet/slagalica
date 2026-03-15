@@ -5,7 +5,7 @@ import java.util.*;
 
 public class WordService {
 
-    public static List<String> words = new ArrayList<>();
+    public static Map<Integer,List<String>> wordsByLength = new HashMap<>();
 
     public static void loadWords(){
 
@@ -25,20 +25,33 @@ public class WordService {
 
                 String word = parts[0].toUpperCase();
 
-                if(word.length() >= 3 && word.length() <= 12){
+                int len = word.length();
 
-                    words.add(word);
+                if(len >= 3 && len <= 12){
+
+                    wordsByLength
+                            .computeIfAbsent(len,k->new ArrayList<>())
+                            .add(word);
 
                 }
 
             }
 
-            System.out.println("Loaded words: " + words.size());
+            System.out.println("Dictionary loaded");
 
         }catch(Exception e){
             e.printStackTrace();
         }
 
+    }
+
+    public static boolean exists(String word){
+
+        List<String> list = wordsByLength.get(word.length());
+
+        if(list == null) return false;
+
+        return list.contains(word);
     }
 
 }

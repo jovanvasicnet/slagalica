@@ -722,9 +722,29 @@ public class MainController {
 
         GameRound g = GameService.activeGames.get(matchId);
 
-        g.answers.put(teamId,word);
+        if(g != null){
+            g.answers.put(teamId,word);
+        }
 
         return "ok";
+    }
+
+    @GetMapping("/team/game1/result/{matchId}")
+    public Map<String,Object> result(@PathVariable int matchId){
+
+        GameRound g = GameService.activeGames.get(matchId);
+
+        if(g == null){
+            return new HashMap<>();
+        }
+
+        long now = System.currentTimeMillis();
+
+        if(now - g.startTime < 60000){
+            return new HashMap<>();
+        }
+
+        return GameService.calculateResult(g);
 
     }
 }
