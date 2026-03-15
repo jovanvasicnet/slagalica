@@ -238,22 +238,105 @@ public class MainController {
 
         try(Connection conn = DatabaseService.connect()) {
 
+            List<Integer> teams = new ArrayList<>();
 
             PreparedStatement ps = conn.prepareStatement(
+                    "SELECT id FROM tournament_teams WHERE tournament_id=?"
+            );
+
+            ps.setInt(1,id);
+
+            ResultSet rs = ps.executeQuery();
+
+            while(rs.next()){
+                teams.add(rs.getInt("id"));
+            }
+
+            if(teams.size() < 2){
+                return "not_enough_teams";
+            }
+
+            Collections.shuffle(teams);
+
+            for(int i=0;i<teams.size();i+=2){
+
+                int team1 = teams.get(i);
+                Integer team2 = null;
+
+                if(i+1 < teams.size()){
+                    team2 = teams.get(i+1);
+                }
+
+                PreparedStatement insert = conn.prepareStatement(
+                        "INSERT INTO matches(tournament_id,round,bracket,team1_id,team2_id,status) VALUES(?,?,?,?,?,?)"
+                );
+
+                insert.setInt(1,id);
+                insert.setInt(2,1);
+                insert.setString(3,"WINNERS");
+                insert.setInt(4,team1);
+
+                if(team2 == null){
+                    insert.setNull(5,Types.INTEGER);
+                }else{
+                    insert.setInt(5,team2);
+                }
+
+                insert.setString(6,"WAITING");
+
+                insert.executeUpdate();
+            }
+
+            PreparedStatement update = conn.prepareStatement(
                     "UPDATE tournaments SET status='STARTED' WHERE id=?"
             );
 
-            ps.setInt(1, id);
+            update.setInt(1,id);
+            update.executeUpdate();
 
-            ps.executeUpdate();
+            return "tournament_started";
 
-            return "started";
-
-        } catch(Exception e) {
+        } catch(Exception e){
             e.printStackTrace();
         }
 
         return "error";
+    }
+    @GetMapping("/admin/tournament/{id}/matches")
+    public List<Map<String,Object>> matches(@PathVariable int id){
+
+        List<Map<String,Object>> list = new ArrayList<>();
+
+        try(Connection conn = DatabaseService.connect()){
+
+            PreparedStatement ps = conn.prepareStatement(
+                    "SELECT m.id, t1.name as team1, t2.name as team2 " +
+                            "FROM matches m " +
+                            "LEFT JOIN tournament_teams t1 ON m.team1_id=t1.id " +
+                            "LEFT JOIN tournament_teams t2 ON m.team2_id=t2.id " +
+                            "WHERE m.tournament_id=? AND round=1"
+            );
+
+            ps.setInt(1,id);
+
+            ResultSet rs = ps.executeQuery();
+
+            while(rs.next()){
+
+                Map<String,Object> m = new HashMap<>();
+
+                m.put("id",rs.getInt("id"));
+                m.put("team1",rs.getString("team1"));
+                m.put("team2",rs.getString("team2"));
+
+                list.add(m);
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return list;
     }
     @PostMapping("/admin/tournament/finish/{id}")
     public String finishTournament(@PathVariable int id) {
@@ -418,5 +501,181 @@ public class MainController {
 
         return list;
     }
+    @PostMapping("/team/session")
+    public Map<String,Object> joinSession(@RequestBody Map<String,Object> req){
 
+        Map<String,Object> res = new HashMap<>();
+
+        try(Connection conn = DatabaseService.connect()){
+
+            PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO team_sessions(team_id,session_id) VALUES(?,?)"
+            );
+
+            ps.setInt(1,(Integer)req.get("teamId"));
+            ps.setString(2,(String)req.get("sessionId"));
+
+            ps.executeUpdate();
+
+            res.put("success",true);
+
+        }catch(Exception e){
+            e.printStackTrace();
+            res.put("success",false);
+        }
+
+        return res;
+    }
+    @GetMapping("/admin/team/{teamId}/players")
+    public Map<String,Object> players(@PathVariable int teamId){
+
+        Map<String,Object> res = new HashMap<>();
+
+        try(Connection conn = DatabaseService.connect()){
+
+            PreparedStatement ps = conn.prepareStatement(
+                    "SELECT COUNT(*) as total FROM team_sessions WHERE team_id=?"
+            );
+
+            ps.setInt(1,teamId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if(rs.next()){
+                res.put("players",rs.getInt("total"));
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return res;
+    }
+
+    @GetMapping("/team/match/{teamId}")
+    public Map<String,Object> teamMatch(@PathVariable int teamId){
+
+        Map<String,Object> res = new HashMap<>();
+
+        try(Connection conn = DatabaseService.connect()){
+
+            PreparedStatement ps = conn.prepareStatement(
+
+                    "SELECT m.id,t1.name as team1,t2.name as team2 " +
+                            "FROM matches m " +
+                            "LEFT JOIN tournament_teams t1 ON m.team1_id=t1.id " +
+                            "LEFT JOIN tournament_teams t2 ON m.team2_id=t2.id " +
+                            "WHERE m.team1_id=? OR m.team2_id=? LIMIT 1"
+
+            );
+
+            ps.setInt(1,teamId);
+            ps.setInt(2,teamId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if(rs.next()){
+
+                String team1 = rs.getString("team1");
+                String team2 = rs.getString("team2");
+
+                if(team1.equals(team1)){
+
+                    res.put("team",team1);
+                    res.put("opponent",team2);
+
+                }else{
+
+                    res.put("team",team2);
+                    res.put("opponent",team1);
+
+                }
+
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return res;
+    }
+
+    @PostMapping("/admin/match/start/{matchId}")
+    public String startMatch(@PathVariable int matchId){
+
+        try(Connection conn = DatabaseService.connect()){
+
+            PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE matches SET status='COUNTDOWN', start_time=? WHERE id=?"
+            );
+
+            Timestamp start = new Timestamp(System.currentTimeMillis() + 15000);
+
+            ps.setTimestamp(1,start);
+            ps.setInt(2,matchId);
+
+            ps.executeUpdate();
+
+            return "started";
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return "error";
+    }
+
+    @GetMapping("/team/match-status/{teamId}")
+    public Map<String,Object> matchStatus(@PathVariable int teamId){
+
+        Map<String,Object> res = new HashMap<>();
+
+        try(Connection conn = DatabaseService.connect()){
+
+            PreparedStatement ps = conn.prepareStatement(
+
+                    "SELECT m.id,m.start_time,m.status," +
+                            "t1.name as team1,t2.name as team2," +
+                            "t1.id as t1id,t2.id as t2id " +
+                            "FROM matches m " +
+                            "LEFT JOIN tournament_teams t1 ON m.team1_id=t1.id " +
+                            "LEFT JOIN tournament_teams t2 ON m.team2_id=t2.id " +
+                            "WHERE m.team1_id=? OR m.team2_id=? LIMIT 1"
+
+            );
+
+            ps.setInt(1,teamId);
+            ps.setInt(2,teamId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if(rs.next()){
+
+                res.put("matchId",rs.getInt("id"));
+                res.put("status",rs.getString("status"));
+                res.put("startTime",rs.getString("start_time"));
+
+                int t1 = rs.getInt("t1id");
+                int t2 = rs.getInt("t2id");
+
+                if(teamId == t1){
+
+                    res.put("team",rs.getString("team1"));
+                    res.put("opponent",rs.getString("team2"));
+
+                }else{
+
+                    res.put("team",rs.getString("team2"));
+                    res.put("opponent",rs.getString("team1"));
+
+                }
+
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return res;
+    }
 }
