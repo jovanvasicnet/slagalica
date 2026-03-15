@@ -6,8 +6,8 @@ public class GameRound {
 
     private int matchId;
 
-    public int team1Id;
-    public int team2Id;
+    private int team1Id;
+    private int team2Id;
 
     private List<Character> letters;
 
@@ -15,7 +15,7 @@ public class GameRound {
 
     public long startTime;
 
-    public Map<Integer,String> answers = new HashMap<>();
+    private Map<Integer,String> answers = new HashMap<>();
 
 
     public int getMatchId() {

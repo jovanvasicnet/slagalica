@@ -702,7 +702,7 @@ public class MainController {
 
         return res;
     }
-    
+
     @PostMapping("/admin/start-game1/{matchId}")
     public GameRound startGame(@PathVariable int matchId){
 
@@ -750,7 +750,7 @@ public class MainController {
         GameRound g = GameService.activeGames.get(matchId);
 
         if(g != null){
-            g.answers.put(teamId,word);
+            g.getAnswers().put(teamId,word);
         }
 
         return "ok";

@@ -45,10 +45,10 @@ public class GameService {
 
         GameRound g = new GameRound();
 
-        g.matchId = matchId;
-        g.solution = solution;
-        g.letters = letters;
-        g.startTime = System.currentTimeMillis();
+        g.setMatchId(matchId);
+        g.setSolution(solution);
+        g.setLetters(letters);
+        g.setStartTime(System.currentTimeMillis());
 
         activeGames.put(matchId,g);
 
@@ -76,15 +76,15 @@ public class GameService {
 
         if(!WordService.exists(word)) return 0;
 
-        if(!canBuild(word,g.letters)) return 0;
+        if(!canBuild(word,g.getLetters())) return 0;
 
         int points = word.length();
 
-        if(word.equals(g.solution)){
+        if(word.equals(g.getSolution())){
             points += 3;
         }
 
-        if(word.length() > g.solution.length()){
+        if(word.length() > g.getSolution().length()){
             points += 6;
         }
 
