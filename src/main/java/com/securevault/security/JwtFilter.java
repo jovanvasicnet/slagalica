@@ -17,6 +17,12 @@ public class JwtFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
 
+        // VAŽNO za CORS
+        if(req.getMethod().equalsIgnoreCase("OPTIONS")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String path = req.getRequestURI();
 
         if(path.equals("/admin/login") || path.equals("/") || path.equals("/ping")) {
