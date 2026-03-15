@@ -748,7 +748,8 @@ public class MainController {
         String word = ((String)req.get("word")).toUpperCase();
 
         GameRound g = GameService.activeGames.get(matchId);
-
+        System.out.println("MATCH ID: " + matchId);
+        System.out.println("GAME EXISTS: " + (g != null));
         if(g != null){
             g.getAnswers().put(teamId,word);
         }
