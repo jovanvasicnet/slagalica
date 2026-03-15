@@ -9,11 +9,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @RestController
 public class ServerApp {
 
-    @GetMapping("/")
-    public String home() {
-        return "Server radi!";
-    }
-
     public static void main(String[] args) {
         SpringApplication.run(ServerApp.class, args);
     }
