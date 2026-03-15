@@ -12,19 +12,36 @@ public class GameService {
 
     public static GameRound generateGame(int matchId){
 
-        // RANDOM DUŽINA 10-12
+        GameRound g = new GameRound();
+
+        try(Connection conn = DatabaseService.connect()){
+
+            PreparedStatement ps = conn.prepareStatement(
+                    "SELECT team1_id, team2_id FROM matches WHERE id=?"
+            );
+
+            ps.setInt(1,matchId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if(rs.next()){
+
+                g.setTeam1Id(rs.getInt("team1_id"));
+                g.setTeam2Id(rs.getInt("team2_id"));
+
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        // ostatak tvoje logike
+
         int len = 10 + rand.nextInt(3);
 
         List<String> candidates = WordService.wordsByLength.get(len);
 
-        if(candidates == null || candidates.isEmpty()){
-            throw new RuntimeException("Nema riječi dužine "+len);
-        }
-
-        // RANDOM RIJEČ TE DUŽINE
-        String solution = candidates.get(
-                rand.nextInt(candidates.size())
-        );
+        String solution = candidates.get(rand.nextInt(candidates.size()));
 
         List<Character> letters = new ArrayList<>();
 
@@ -32,18 +49,11 @@ public class GameService {
             letters.add(c);
         }
 
-        // DODAJ RANDOM SLOVA DO 12
         while(letters.size() < 12){
-
-            char randomLetter = (char)('A' + rand.nextInt(26));
-            letters.add(randomLetter);
-
+            letters.add((char)('A' + rand.nextInt(26)));
         }
 
-        // IZMIJEŠAJ
         Collections.shuffle(letters);
-
-        GameRound g = new GameRound();
 
         g.setMatchId(matchId);
         g.setSolution(solution);
@@ -54,7 +64,6 @@ public class GameService {
 
         return g;
     }
-
     public static boolean canBuild(String word, List<Character> letters){
 
         List<Character> temp = new ArrayList<>(letters);
