@@ -13,7 +13,6 @@ import java.sql.*;
 import java.util.*;
 
 @RestController
-@CrossOrigin(origins = "*")
 public class MainController {
 
     @GetMapping("/")
