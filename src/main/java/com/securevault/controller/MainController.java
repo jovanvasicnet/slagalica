@@ -8,6 +8,8 @@ import com.securevault.security.*;
 import com.securevault.service.DatabaseService;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
+import java.sql.Timestamp;
+import java.time.Instant;
 
 import java.sql.*;
 import java.util.*;
@@ -103,7 +105,6 @@ public class MainController {
 
         try(Connection conn = DatabaseService.connect()) {
 
-
             PreparedStatement ps = conn.prepareStatement(
                     "INSERT INTO tournaments(name,quiz_type,location,bar_name,start_time,planned_start,status) VALUES(?,?,?,?,?,?,?)"
             );
@@ -112,8 +113,10 @@ public class MainController {
             ps.setString(2, req.getQuizType());
             ps.setString(3, req.getLocation());
             ps.setString(4, req.getBarName());
-            ps.setString(5, req.getStartTime());
-            ps.setString(6, req.getPlannedStart());
+
+            ps.setTimestamp(5, Timestamp.from(Instant.parse(req.getStartTime())));
+            ps.setTimestamp(6, Timestamp.from(Instant.parse(req.getPlannedStart())));
+
             ps.setString(7, "CREATED");
 
             ps.executeUpdate();
@@ -122,10 +125,10 @@ public class MainController {
 
         } catch(Exception e) {
             e.printStackTrace();
+            return "error: " + e.getMessage();
         }
-
-        return "error";
     }
+
     @GetMapping("/admin/tournament/{id}/teams")
     public List<Map<String,Object>> teams(@PathVariable int id) {
 
