@@ -750,6 +750,9 @@ public class MainController {
         GameRound g = GameService.activeGames.get(matchId);
         System.out.println("MATCH ID: " + matchId);
         System.out.println("GAME EXISTS: " + (g != null));
+        System.out.println("TEAM ID FROM FRONT: " + teamId);
+        System.out.println("TEAM1 ID: " + g.getTeam1Id());
+        System.out.println("TEAM2 ID: " + g.getTeam2Id());
         if(g != null){
             g.getAnswers().put(teamId,word);
         }
