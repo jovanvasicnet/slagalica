@@ -15,6 +15,13 @@ public class DatabaseService {
 
         Connection conn = DriverManager.getConnection(url, user, password);
 
+        Statement st = conn.createStatement();
+        ResultSet rs = st.executeQuery("SELECT username FROM admin");
+
+        while(rs.next()){
+            System.out.println("Admin u bazi: " + rs.getString("username"));
+        }
+
         return conn;
     }
 }

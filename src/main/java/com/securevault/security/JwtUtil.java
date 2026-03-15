@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class JwtUtil {
 
-    private static final String SECRET = "superSecretKey123";
+    private static final String SECRET = "c2xhZ2FsaWNhX3N1cGVyX3NlY3VyZV9qd3Rfc2VjcmV0X2tleV8yMDI2";
 
     public static String generateToken(String username) {
 
