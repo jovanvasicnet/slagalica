@@ -678,6 +678,10 @@ public class MainController {
                 int t1 = rs.getInt("t1id");
                 int t2 = rs.getInt("t2id");
 
+                // 🔹 OVO DODAJ
+                res.put("t1id", t1);
+                res.put("t2id", t2);
+
                 if(teamId == t1){
 
                     res.put("team",rs.getString("team1"));
@@ -698,11 +702,34 @@ public class MainController {
 
         return res;
     }
+    
     @PostMapping("/admin/start-game1/{matchId}")
     public GameRound startGame(@PathVariable int matchId){
 
-        return GameService.generateGame(matchId);
+        GameRound g = GameService.generateGame(matchId);
 
+        try(Connection conn = DatabaseService.connect()){
+
+            PreparedStatement ps = conn.prepareStatement(
+                    "SELECT team1_id, team2_id FROM matches WHERE id=?"
+            );
+
+            ps.setInt(1,matchId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if(rs.next()){
+
+                g.setTeam1Id(rs.getInt("team1_id"));
+                g.setTeam2Id(rs.getInt("team2_id"));
+
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return g;
     }
     @GetMapping("/team/game1/{matchId}")
     public GameRound getGame(@PathVariable int matchId){
@@ -730,7 +757,7 @@ public class MainController {
     }
 
     @GetMapping("/team/game1/result/{matchId}")
-    public Map<String,Object> result(@PathVariable int matchId){
+    public Map<String,Object> result(@PathVariable int matchId) throws InterruptedException {
 
         GameRound g = GameService.activeGames.get(matchId);
 
@@ -740,11 +767,16 @@ public class MainController {
 
         long now = System.currentTimeMillis();
 
-        if(now - g.startTime < 60000){
-            return new HashMap<>();
+        long diff = now - g.startTime;
+
+        if(diff < 60000){
+
+            long wait = 60000 - diff;
+
+            Thread.sleep(wait);
+
         }
 
         return GameService.calculateResult(g);
-
     }
 }

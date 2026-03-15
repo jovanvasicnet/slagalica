@@ -95,15 +95,8 @@ public class GameService {
 
         Map<String,Object> res = new HashMap<>();
 
-        Iterator<Integer> it = g.answers.keySet().iterator();
-
-        if(!it.hasNext()) return res;
-
-        int team1 = it.next();
-        String w1 = g.answers.get(team1);
-
-        int team2 = it.hasNext() ? it.next() : -1;
-        String w2 = team2 != -1 ? g.answers.get(team2) : "";
+        String w1 = g.getAnswers().getOrDefault(g.getTeam1Id(),"");
+        String w2 = g.getAnswers().getOrDefault(g.getTeam2Id(),"");
 
         int p1 = score(g,w1);
         int p2 = score(g,w2);
@@ -116,9 +109,11 @@ public class GameService {
 
         res.put("team1Word",w1);
         res.put("team2Word",w2);
+
         res.put("team1Points",p1);
         res.put("team2Points",p2);
-        res.put("solution",g.solution);
+
+        res.put("solution",g.getSolution());
 
         return res;
     }
