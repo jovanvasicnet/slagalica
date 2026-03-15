@@ -1,11 +1,9 @@
 package com.securevault.controller;
 
-import com.securevault.model.JoinTeamRequest;
-import com.securevault.model.LoginRequest;
-import com.securevault.model.TeamRequest;
-import com.securevault.model.TournamentRequest;
+import com.securevault.model.*;
 import com.securevault.security.*;
 import com.securevault.service.DatabaseService;
+import com.securevault.service.GameService;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
 import java.sql.Timestamp;
@@ -508,16 +506,38 @@ public class MainController {
 
         try(Connection conn = DatabaseService.connect()){
 
-            PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO team_sessions(team_id,session_id) VALUES(?,?)"
+            int teamId = (Integer)req.get("teamId");
+            String sessionId = (String)req.get("sessionId");
+
+            // provjeri ima li leader
+            PreparedStatement check = conn.prepareStatement(
+                    "SELECT COUNT(*) as total FROM team_sessions WHERE team_id=? AND leader=true"
             );
 
-            ps.setInt(1,(Integer)req.get("teamId"));
-            ps.setString(2,(String)req.get("sessionId"));
+            check.setInt(1,teamId);
+
+            ResultSet rs = check.executeQuery();
+
+            boolean leader = false;
+
+            if(rs.next()){
+                if(rs.getInt("total") == 0){
+                    leader = true;
+                }
+            }
+
+            PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO team_sessions(team_id,session_id,leader) VALUES(?,?,?)"
+            );
+
+            ps.setInt(1,teamId);
+            ps.setString(2,sessionId);
+            ps.setBoolean(3,leader);
 
             ps.executeUpdate();
 
             res.put("success",true);
+            res.put("leader",leader);
 
         }catch(Exception e){
             e.printStackTrace();
@@ -677,5 +697,31 @@ public class MainController {
         }
 
         return res;
+    }
+    @PostMapping("/admin/start-game1/{matchId}")
+    public GameRound startGame(@PathVariable int matchId){
+
+        return GameService.generateGame(matchId);
+
+    }
+    @GetMapping("/team/game1/{matchId}")
+    public GameRound getGame(@PathVariable int matchId){
+
+        return GameService.activeGames.get(matchId);
+
+    }
+    @PostMapping("/team/game1/answer")
+    public String answer(@RequestBody Map<String,Object> req){
+
+        int matchId = (Integer)req.get("matchId");
+        int teamId = (Integer)req.get("teamId");
+        String word = ((String)req.get("word")).toUpperCase();
+
+        GameRound g = GameService.activeGames.get(matchId);
+
+        g.answers.put(teamId,word);
+
+        return "ok";
+
     }
 }
