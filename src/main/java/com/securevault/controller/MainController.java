@@ -731,7 +731,7 @@ public class MainController {
 
         return g;
     }
-    
+
     @GetMapping("/team/game1/state/{matchId}")
     public Map<String,Object> gameState(@PathVariable int matchId){
 
@@ -875,5 +875,32 @@ public class MainController {
         }
 
         return GameService.calculateResult(g);
+    }
+
+    @GetMapping("/team/current-match/{teamId}")
+    public Map<String,Object> currentMatch(@PathVariable int teamId){
+
+        Map<String,Object> res = new HashMap<>();
+
+        try(Connection conn = DatabaseService.connect()){
+
+            PreparedStatement ps = conn.prepareStatement(
+                    "SELECT id FROM matches WHERE team1_id=? OR team2_id=?"
+            );
+
+            ps.setInt(1,teamId);
+            ps.setInt(2,teamId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if(rs.next()){
+                res.put("matchId", rs.getInt("id"));
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return res;
     }
 }
