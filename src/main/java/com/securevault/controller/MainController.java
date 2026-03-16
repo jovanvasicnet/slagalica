@@ -731,6 +731,99 @@ public class MainController {
 
         return g;
     }
+    
+    @GetMapping("/team/game1/state/{matchId}")
+    public Map<String,Object> gameState(@PathVariable int matchId){
+
+        Map<String,Object> res = new HashMap<>();
+
+        GameRound g = GameService.activeGames.get(matchId);
+
+        if(g == null){
+            return res;
+        }
+
+        long now = System.currentTimeMillis();
+
+        // COUNTDOWN -> PLAYING
+        if(g.getState().equals("COUNTDOWN")){
+
+            long diff = now - g.getCountdownStart();
+
+            if(diff >= 15000){
+
+                g.setState("PLAYING");
+                g.setPlayStart(now);
+
+            }else{
+
+                res.put("state","COUNTDOWN");
+                res.put("time",15 - (diff/1000));
+                return res;
+
+            }
+
+        }
+
+        // PLAYING -> RESULT
+        if(g.getState().equals("PLAYING")){
+
+            long diff = now - g.getPlayStart();
+
+            boolean team1Answered = g.getAnswers().containsKey(g.getTeam1Id());
+            boolean team2Answered = g.getAnswers().containsKey(g.getTeam2Id());
+
+            if(diff >= 60000 || (team1Answered && team2Answered)){
+
+                g.setState("RESULT");
+                g.setResultStart(now);
+
+                Map<String,Object> result = GameService.calculateResult(g);
+
+                g.setResult(result);
+
+            }else{
+
+                res.put("state","PLAYING");
+                res.put("time",60 - (diff/1000));
+                res.put("letters",g.getLetters());
+
+                return res;
+
+            }
+
+        }
+
+        // RESULT -> FINISHED
+        if(g.getState().equals("RESULT")){
+
+            long diff = now - g.getResultStart();
+
+            if(diff >= 6000){
+
+                g.setState("FINISHED");
+
+            }else{
+
+                res.put("state","RESULT");
+                res.put("time",6 - (diff/1000));
+                res.put("result",g.getResult());
+
+                return res;
+
+            }
+
+        }
+
+        if(g.getState().equals("FINISHED")){
+
+            res.put("state","FINISHED");
+
+        }
+
+        return res;
+    }
+
     @GetMapping("/team/game1/{matchId}")
     public GameRound getGame(@PathVariable int matchId){
 

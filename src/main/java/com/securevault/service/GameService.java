@@ -62,7 +62,8 @@ public class GameService {
         g.setSolution(solution);
         g.setLetters(letters);
         g.setStartTime(System.currentTimeMillis());
-
+        g.setState("COUNTDOWN");
+        g.setCountdownStart(System.currentTimeMillis());
         activeGames.put(matchId,g);
 
         return g;

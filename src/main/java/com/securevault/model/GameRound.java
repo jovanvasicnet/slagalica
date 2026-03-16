@@ -5,7 +5,10 @@ import java.util.*;
 public class GameRound {
 
     private int matchId;
-
+    private String state;
+    private long countdownStart;
+    private long playStart;
+    private long resultStart;
     private int team1Id;
     private int team2Id;
 
@@ -17,6 +20,14 @@ public class GameRound {
 
     private Map<Integer,String> answers = new HashMap<>();
 
+    private Map<String,Object> result;
+
+    public Map<String, Object> getResult() {
+        return result;
+    }
+    public void setResult(Map<String, Object> result) {
+        this.result = result;
+    }
 
     public int getMatchId() {
         return matchId;
@@ -35,7 +46,33 @@ public class GameRound {
         this.team1Id = team1Id;
     }
 
+    public long getCountdownStart() {
+        return countdownStart;
+    }
+    public void setCountdownStart(long countdownStart) {
+        this.countdownStart = countdownStart;
 
+    }
+
+    public long getPlayStart() {
+        return playStart;
+    }
+    public void setPlayStart(long playStart) {
+        this.playStart = playStart;
+    }
+    public long getResultStart() {
+        return resultStart;
+    }
+    public void setResultStart(long resultStart) {
+        this.resultStart = resultStart;
+    }
+    public String getState() {
+        return state;
+    }
+    public void setState(String state) {
+        this.state = state;
+
+    }
     public int getTeam2Id() {
         return team2Id;
     }
